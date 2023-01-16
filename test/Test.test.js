@@ -14,8 +14,27 @@ describe("Test", () => {
   });
 
   const sendMoney = async (sender) => {
+    const amount = 100;
+    const txData = {
+      value: amount,
+      to: test.address,
+    };
 
-  }
+    const tx = await sender.sendTransaction(txData);
+    await tx.wait();
+    return [tx, amount];
+  };
+
+  it("test event", async () => {
+    const [tx, amount] = await sendMoney(acc2);
+
+    await expect(() => tx).to.changeEtherBalances(
+      [acc2, test],
+      [-amount, amount]
+    );
+
+    await expect(tx).to.emit(test, "Paid").withArgs(acc2.address, amount);
+  });
 
   it("is deployed", async () => {
     expect(test.address).to.be.properAddress;
@@ -52,20 +71,20 @@ describe("Test", () => {
   });
 
   it("get payment", async () => {
-    const msg = "Hey"
+    const msg = "Hey";
     const tx = await test.connect(acc2).pay(msg, { value: 100 });
     const payment = await test.getPayment(acc2.address, 0);
 
-    expect(payment.message).to.eq(msg)
-    expect(payment.value).to.eq(100)
+    expect(payment.message).to.eq(msg);
+    expect(payment.value).to.eq(100);
   });
 
   it("get payment", async () => {
-    const msg = "Hey"
+    const msg = "Hey";
     const tx = await test.connect(acc2).pay(msg, { value: 100 });
     const payment = await test.getPayment(acc2.address, 0);
 
-    expect(payment.message).to.eq(msg)
-    expect(payment.value).to.eq(100)
+    expect(payment.message).to.eq(msg);
+    expect(payment.value).to.eq(100);
   });
 });

@@ -32,8 +32,21 @@ describe("Test", () => {
       [acc2, test],
       [-amount, amount]
     );
+   const blockTime = await (await ethers.provider.getBlock(tx.blockNumber)).timestamp;
+    await expect(tx).to.emit(test, "Paid").withArgs(acc2.address, amount, blockTime);
+  });
 
-    await expect(tx).to.emit(test, "Paid").withArgs(acc2.address, amount);
+  it("withdraw", async () => {
+    const [_, amount] = await sendMoney(acc2);
+
+    const tx = await test.withdraw(acc1.address);
+    await expect(() => tx).changeEtherBalances([acc1, test], [amount, -amount])
+  });
+
+  it("withdraw error", async () => {
+    await sendMoney(acc2);
+
+    await expect(test.connect(acc2).withdraw(acc1.address)).to.be.revertedWith('You are not a creator');
   });
 
   it("is deployed", async () => {
@@ -68,15 +81,6 @@ describe("Test", () => {
     const tx = await test.connect(acc1).pay("Hey 2nd", { value: val });
 
     await expect(() => tx).to.changeEtherBalances([acc1, test], [-val, val]);
-  });
-
-  it("get payment", async () => {
-    const msg = "Hey";
-    const tx = await test.connect(acc2).pay(msg, { value: 100 });
-    const payment = await test.getPayment(acc2.address, 0);
-
-    expect(payment.message).to.eq(msg);
-    expect(payment.value).to.eq(100);
   });
 
   it("get payment", async () => {
